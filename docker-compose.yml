@@ -1,0 +1,28 @@
+# Optional: standalone PostGraphile on :5000 (the app embeds PostGraphile on the Nuxt port by default).
+# PostGraphile against your Supabase Postgres database.
+# Set DATABASE_URL to the direct connection string (port 5432) from Supabase → Settings → Database.
+# Set SUPABASE_JWT_SECRET from Supabase → Settings → API → JWT Secret.
+
+services:
+  postgraphile:
+    image: graphile/postgraphile:4.14.0
+    ports:
+      - '5000:5000'
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+    command:
+      - '--connection'
+      - '${DATABASE_URL}'
+      - '--schema'
+      - 'public'
+      - '--enhance-graphiql'
+      - '--allow-explain'
+      - '--dynamic-json'
+      - '--jwt-secret'
+      - '${SUPABASE_JWT_SECRET}'
+      - '--jwt-verify-algorithms'
+      - 'HS256'
+      - '--default-role'
+      - 'authenticated'
+    restart: unless-stopped

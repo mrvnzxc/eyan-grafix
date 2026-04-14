@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: 255 255 255;
+  --surface-muted: 248 250 252;
+  --ink: 15 23 42;
+  --ink-muted: 100 116 139;
+  --accent: 99 102 241;
+  --accent-hover: 79 70 229;
+}
+
+.dark {
+  --surface: 15 23 42;
+  --surface-muted: 30 41 59;
+  --ink: 248 250 252;
+  --ink-muted: 148 163 184;
+  --accent: 129 140 248;
+  --accent-hover: 165 180 252;
+}
+
+@layer base {
+  /* Theme + native UI (scrollbars, form controls) follow the toggled .dark class */
+  html {
+    @apply antialiased bg-white text-slate-900;
+    color-scheme: light;
+  }
+
+  html.dark {
+    @apply bg-slate-900 text-slate-100;
+    color-scheme: dark;
+  }
+
+  /*
+   * Browsers often use black text for form controls even when the page is dark.
+   * Inherit from the themed root so fields stay readable without per-field fixes.
+   */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  textarea,
+  select,
+  button {
+    color: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-slate-400;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    @apply text-slate-500;
+  }
+}
