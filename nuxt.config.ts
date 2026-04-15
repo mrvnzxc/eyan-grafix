@@ -53,9 +53,10 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    // PostGraphile + pg: loaded from node_modules at runtime (CommonJS + pg pool).
+    // Bundle GraphQL runtime deps into the server artifact so serverless targets
+    // (e.g. Vercel) do not rely on runtime node_modules resolution.
     externals: {
-      external: ['postgraphile', 'pg'],
+      inline: ['postgraphile', 'pg', 'jsonwebtoken'],
     },
   },
 

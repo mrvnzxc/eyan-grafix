@@ -25,7 +25,8 @@ export default defineLazyEventHandler(() => {
       console.error('PostGraphile init error:', msg)
       throw createError({
         statusCode: 503,
-        statusMessage: msg,
+        message: msg,
+        statusMessage: 'GraphQL service unavailable',
       })
     }
 
