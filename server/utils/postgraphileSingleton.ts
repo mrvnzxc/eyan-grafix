@@ -1,9 +1,10 @@
+import { createRequire } from 'node:module'
 import dns from 'node:dns'
 import type { IncomingMessage } from 'node:http'
-import * as jwt from 'jsonwebtoken'
-import * as postgraphileModule from 'postgraphile'
 import { createSupabasePoolConfig } from './supabasePgPoolConfig'
 import { createSupabaseJwtVerificationSecret } from './supabaseJwtVerificationKey'
+
+const require = createRequire(import.meta.url)
 
 // Prefer IPv4 when pooler has both A and AAAA (helps some Windows setups).
 dns.setDefaultResultOrder('ipv4first')
@@ -19,6 +20,7 @@ let cacheKey = ''
  * Payload is decoded here; PostGraphile verifies the signature immediately after.
  */
 function createSupabaseRequestJwtPgSettings() {
+  const jwt = require('jsonwebtoken') as typeof import('jsonwebtoken')
   return async (req: IncomingMessage) => {
     const auth = req.headers?.authorization
     if (!auth?.startsWith('Bearer ')) return {}
@@ -41,7 +43,9 @@ function loadPostgraphile(): (
   schema: string,
   options: Record<string, unknown>,
 ) => PostgraphileMiddleware {
-  const mod = postgraphileModule as unknown as {
+  // Keep a static specifier so file tracing can include this package on serverless.
+  require.resolve('postgraphile')
+  const mod = require('postgraphile') as {
     default?: (...args: unknown[]) => PostgraphileMiddleware
     postgraphile?: (...args: unknown[]) => PostgraphileMiddleware
   }

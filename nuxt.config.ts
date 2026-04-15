@@ -53,10 +53,10 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    // Bundle GraphQL runtime deps into the server artifact so serverless targets
-    // (e.g. Vercel) do not rely on runtime node_modules resolution.
+    // Keep runtime deps external, but force tracing so serverless bundles include them.
     externals: {
-      inline: ['postgraphile', 'pg', 'jsonwebtoken'],
+      external: ['postgraphile', 'pg', 'jsonwebtoken'],
+      traceInclude: ['node_modules/postgraphile/**/*', 'node_modules/pg/**/*'],
     },
   },
 
