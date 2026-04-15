@@ -151,11 +151,34 @@ function toggleTheme() {
             </NuxtLink>
             <button
               type="button"
-              class="rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               :aria-pressed="colorMode.value === 'dark'"
               @click="toggleTheme"
             >
-              {{ colorMode.value === 'dark' ? 'Light mode' : 'Dark mode' }}
+              <svg
+                v-if="colorMode.value === 'dark'"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 4.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 12 4.5Zm0 10.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm6.75-3a.75.75 0 0 1 .75-.75H21a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75ZM12 17.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V18a.75.75 0 0 1 .75-.75Zm-6.75-4.5a.75.75 0 0 1 0-1.5H6.75a.75.75 0 0 1 0 1.5H5.25Zm10.742-5.492a.75.75 0 0 1 1.06 0l1.061 1.061a.75.75 0 1 1-1.06 1.061l-1.062-1.06a.75.75 0 0 1 0-1.062ZM6.947 16.007a.75.75 0 0 1 1.06 0l1.062 1.061a.75.75 0 1 1-1.06 1.061l-1.062-1.06a.75.75 0 0 1 0-1.062Zm11.166 1.06a.75.75 0 0 1-1.06 1.061l-1.062-1.06a.75.75 0 0 1 1.06-1.062l1.062 1.061ZM8.008 7.258a.75.75 0 0 1 0 1.061l-1.061 1.061a.75.75 0 1 1-1.06-1.061l1.06-1.06a.75.75 0 0 1 1.061 0Z"
+                />
+              </svg>
+              <svg
+                v-else
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path
+                  d="M9.528 1.718a.75.75 0 0 1 .162.819 8.25 8.25 0 0 0 10.773 10.773.75.75 0 0 1 .981.981 9.75 9.75 0 1 1-12.897-12.897.75.75 0 0 1 .981.324Z"
+                />
+              </svg>
             </button>
             <button
               type="button"
@@ -168,10 +191,33 @@ function toggleTheme() {
           <template v-else>
             <button
               type="button"
-              class="rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+              class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               @click="toggleTheme"
             >
-              {{ colorMode.value === 'dark' ? 'Light mode' : 'Dark mode' }}
+              <svg
+                v-if="colorMode.value === 'dark'"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 4.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 12 4.5Zm0 10.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm6.75-3a.75.75 0 0 1 .75-.75H21a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75ZM12 17.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V18a.75.75 0 0 1 .75-.75Zm-6.75-4.5a.75.75 0 0 1 0-1.5H6.75a.75.75 0 0 1 0 1.5H5.25Zm10.742-5.492a.75.75 0 0 1 1.06 0l1.061 1.061a.75.75 0 1 1-1.06 1.061l-1.062-1.06a.75.75 0 0 1 0-1.062ZM6.947 16.007a.75.75 0 0 1 1.06 0l1.062 1.061a.75.75 0 1 1-1.06 1.061l-1.062-1.06a.75.75 0 0 1 0-1.062Zm11.166 1.06a.75.75 0 0 1-1.06 1.061l-1.062-1.06a.75.75 0 0 1 1.06-1.062l1.062 1.061ZM8.008 7.258a.75.75 0 0 1 0 1.061l-1.061 1.061a.75.75 0 1 1-1.06-1.061l1.06-1.06a.75.75 0 0 1 1.061 0Z"
+                />
+              </svg>
+              <svg
+                v-else
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path
+                  d="M9.528 1.718a.75.75 0 0 1 .162.819 8.25 8.25 0 0 0 10.773 10.773.75.75 0 0 1 .981.981 9.75 9.75 0 1 1-12.897-12.897.75.75 0 0 1 .981.324Z"
+                />
+              </svg>
             </button>
             <NuxtLink
               to="/login"
