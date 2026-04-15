@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module'
 import dns from 'node:dns'
 import type { IncomingMessage } from 'node:http'
+import { postgraphile as createPostgraphile } from 'postgraphile'
 import { createSupabasePoolConfig } from './supabasePgPoolConfig'
 import { createSupabaseJwtVerificationSecret } from './supabaseJwtVerificationKey'
 
@@ -43,17 +44,14 @@ function loadPostgraphile(): (
   schema: string,
   options: Record<string, unknown>,
 ) => PostgraphileMiddleware {
-  // Keep a static specifier so file tracing can include this package on serverless.
-  require.resolve('postgraphile')
-  const mod = require('postgraphile') as {
-    default?: (...args: unknown[]) => PostgraphileMiddleware
-    postgraphile?: (...args: unknown[]) => PostgraphileMiddleware
-  }
-  const fn = mod.postgraphile ?? mod.default
-  if (typeof fn !== 'function') {
+  if (typeof createPostgraphile !== 'function') {
     throw new Error('postgraphile package did not export a callable factory')
   }
-  return fn as (poolOrString: string, schema: string, options: Record<string, unknown>) => PostgraphileMiddleware
+  return createPostgraphile as (
+    poolOrString: string,
+    schema: string,
+    options: Record<string, unknown>,
+  ) => PostgraphileMiddleware
 }
 
 function createHandler(databaseUrl: string, jwtSecret: string, supabaseUrl: string): PostgraphileMiddleware {

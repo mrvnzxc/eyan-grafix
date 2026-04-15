@@ -53,10 +53,10 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    // Keep runtime deps external, but force tracing so serverless bundles include them.
+    // Force PostGraphile into the server bundle for Vercel serverless runtime.
     externals: {
-      external: ['postgraphile', 'pg', 'jsonwebtoken'],
-      traceInclude: ['node_modules/postgraphile/**/*', 'node_modules/pg/**/*'],
+      inline: ['postgraphile'],
+      external: ['pg', 'jsonwebtoken'],
     },
   },
 
