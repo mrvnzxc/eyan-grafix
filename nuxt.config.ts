@@ -52,7 +52,8 @@ export default defineNuxtConfig({
       callback: '/confirm',
       // With useSsrCookies: false the server has no session; skip global SSR redirect so
       // client middleware (client-only / owner) can enforce auth after localStorage hydrates.
-      exclude: ['/', '/login', '/confirm', '/submit*', '/my-requests*', '/dashboard*'],
+      // Exclude Nitro API routes — otherwise unauthenticated GETs (e.g. /api/health/graphql) 302 to /login.
+      exclude: ['/', '/login', '/confirm', '/submit*', '/my-requests*', '/dashboard*', '/api/**'],
     },
   },
 
