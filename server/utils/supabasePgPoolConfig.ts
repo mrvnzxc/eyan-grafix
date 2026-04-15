@@ -16,8 +16,8 @@ export function createSupabasePoolConfig(connectionString: string): pg.PoolConfi
   return {
     connectionString: cs,
     max: 10,
-    connectionTimeoutMillis: 20_000,
-    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 8_000,
+    idleTimeoutMillis: 5_000,
     ...(isSupabase
       ? { ssl: { rejectUnauthorized: supabaseSslRejectUnauthorized() } }
       : {}),
