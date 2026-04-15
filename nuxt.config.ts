@@ -73,7 +73,9 @@ export default defineNuxtConfig({
     // node_modules for deep CJS requires. Keep native-ish drivers external.
     externals: {
       external: ['pg', 'jsonwebtoken'],
-      inline: ['postgraphile'],
+      // tslib must be inlined: Vercel's traced node_modules can omit `tslib/modules/index.js`
+      // while bundled ESM chunks still resolve it (PostGraphile → tslib).
+      inline: ['postgraphile', 'tslib'],
     },
     rollupConfig: {
       plugins: [
