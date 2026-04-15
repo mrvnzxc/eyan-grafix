@@ -1,6 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url'
 
+// Ensure non-turbo PostGraphile build during bundling unless explicitly enabled.
+if (process.env.GRAPHILE_TURBO == null || process.env.GRAPHILE_TURBO === '') {
+  process.env.GRAPHILE_TURBO = '0'
+}
+// Omit embedded GraphiQL HTML assets (we disable GraphiQL); reduces Rollup parse hazards.
+if (process.env.POSTGRAPHILE_OMIT_ASSETS == null || process.env.POSTGRAPHILE_OMIT_ASSETS === '') {
+  process.env.POSTGRAPHILE_OMIT_ASSETS = '1'
+}
+
 const postgraphileGraphiqlHtmlStub = fileURLToPath(
   new URL('./server/shims/postgraphile-graphiql-html.js', import.meta.url),
 )
@@ -59,16 +68,22 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    // Keep PostGraphile external for serverless tracing; stub GraphiQL HTML asset for Rollup.
+    // Bundle PostGraphile into the serverless function — Vercel may not ship externalized
+    // node_modules for deep CJS requires. Keep native-ish drivers external.
     externals: {
-      external: ['postgraphile', 'pg', 'jsonwebtoken'],
+      external: ['pg', 'jsonwebtoken'],
+      inline: ['postgraphile'],
     },
     rollupConfig: {
       plugins: [
         {
           name: 'stub-postgraphile-graphiql-html',
           resolveId(id) {
-            if (id.endsWith('postgraphile/build/assets/graphiql.html.js')) {
+            const normalized = id.replace(/\\/g, '/')
+            if (
+              normalized.includes('postgraphile/build/assets/graphiql.html.js') ||
+              normalized.includes('postgraphile/build-turbo/assets/graphiql.html.js')
+            ) {
               return postgraphileGraphiqlHtmlStub
             }
             return null
