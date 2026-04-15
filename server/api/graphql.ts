@@ -22,6 +22,7 @@ export default defineLazyEventHandler(() => {
       pg = getPostgraphileNodeHandler({ databaseUrl, supabaseJwtSecret, supabaseUrl })
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
+      console.error('PostGraphile init error:', msg)
       throw createError({
         statusCode: 503,
         statusMessage: msg,
