@@ -21,6 +21,9 @@ const graphileLruNamespaceShim = fileURLToPath(
 )
 
 const parseurlDefaultShim = fileURLToPath(new URL('./server/shims/parseurl-default.mjs', import.meta.url))
+const jsonwebtokenDefaultShim = fileURLToPath(
+  new URL('./server/shims/jsonwebtoken-default.mjs', import.meta.url),
+)
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
@@ -84,6 +87,8 @@ export default defineNuxtConfig({
       '@graphile/lru': graphileLruNamespaceShim,
       // See server/shims/parseurl-default.mjs — callable + `.original`; avoid namespace-as-parseUrl.
       parseurl: parseurlDefaultShim,
+      // See server/shims/jsonwebtoken-default.mjs — PostGraphile needs jwt.verify on object.
+      jsonwebtoken: jsonwebtokenDefaultShim,
     },
     // Bundle PostGraphile into the serverless function — Vercel may not ship externalized
     // node_modules for deep CJS requires. Keep native-ish drivers external.
