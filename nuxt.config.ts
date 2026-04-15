@@ -53,10 +53,14 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    // Force PostGraphile into the server bundle for Vercel serverless runtime.
+    // Keep PostGraphile external (avoid Rollup parsing build-turbo assets), but
+    // explicitly include the non-turbo build files for serverless tracing.
     externals: {
-      inline: ['postgraphile'],
-      external: ['pg', 'jsonwebtoken'],
+      external: ['postgraphile', 'pg', 'jsonwebtoken'],
+      traceInclude: [
+        'node_modules/postgraphile/build/**/*',
+        'node_modules/postgraphile/build/index.js',
+      ],
     },
   },
 

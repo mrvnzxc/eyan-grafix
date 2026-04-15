@@ -1,7 +1,6 @@
 import { createRequire } from 'node:module'
 import dns from 'node:dns'
 import type { IncomingMessage } from 'node:http'
-import { postgraphile as createPostgraphile } from 'postgraphile'
 import { createSupabasePoolConfig } from './supabasePgPoolConfig'
 import { createSupabaseJwtVerificationSecret } from './supabaseJwtVerificationKey'
 
@@ -44,14 +43,16 @@ function loadPostgraphile(): (
   schema: string,
   options: Record<string, unknown>,
 ) => PostgraphileMiddleware {
-  if (typeof createPostgraphile !== 'function') {
+  // Force non-turbo entry: build-turbo assets can break Rollup parsing on Vercel.
+  const mod = require('postgraphile/build/index.js') as {
+    default?: (...args: unknown[]) => PostgraphileMiddleware
+    postgraphile?: (...args: unknown[]) => PostgraphileMiddleware
+  }
+  const fn = mod.postgraphile ?? mod.default
+  if (typeof fn !== 'function') {
     throw new Error('postgraphile package did not export a callable factory')
   }
-  return createPostgraphile as (
-    poolOrString: string,
-    schema: string,
-    options: Record<string, unknown>,
-  ) => PostgraphileMiddleware
+  return fn as (poolOrString: string, schema: string, options: Record<string, unknown>) => PostgraphileMiddleware
 }
 
 function createHandler(databaseUrl: string, jwtSecret: string, supabaseUrl: string): PostgraphileMiddleware {
