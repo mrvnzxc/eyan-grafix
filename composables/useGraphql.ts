@@ -31,12 +31,14 @@ function wrapNetworkError(e: unknown): Error {
   const n = e.name
 
   if (status === 401) {
+    const tail = serverMsg ? ` Details: ${serverMsg}` : ''
     return new Error(
-      'GraphQL denied access (401). Try refreshing the page after sign-in so your session token is sent, or sign in again.',
+      `GraphQL denied access (401).${tail} Try refreshing the page after sign-in so your session token is sent, or sign in again.`,
     )
   }
   if (status === 403) {
-    return new Error('GraphQL denied access (403). Your role may not allow this operation.')
+    const tail = serverMsg ? ` Details: ${serverMsg}` : ''
+    return new Error(`GraphQL denied access (403).${tail} Your role may not allow this operation.`)
   }
   if (status === 503) {
     const tail = serverMsg ? ` Details: ${serverMsg}` : ''
