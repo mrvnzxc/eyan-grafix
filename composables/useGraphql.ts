@@ -18,8 +18,17 @@ function serverMessageFromError(e: unknown): string | undefined {
   if (!e || typeof e !== 'object' || !('data' in e)) return undefined
   const d = (e as { data?: unknown }).data
   if (!d || typeof d !== 'object') return undefined
-  const msg = (d as { message?: unknown }).message
-  return typeof msg === 'string' && msg.trim() ? msg : undefined
+  const top = (d as { message?: unknown }).message
+  if (typeof top === 'string' && top.trim()) return top
+  const errs = (d as { errors?: unknown }).errors
+  if (Array.isArray(errs) && errs.length > 0) {
+    const first = errs[0]
+    if (first && typeof first === 'object' && 'message' in first) {
+      const m = (first as { message?: unknown }).message
+      if (typeof m === 'string' && m.trim()) return m
+    }
+  }
+  return undefined
 }
 
 function wrapNetworkError(e: unknown): Error {
@@ -38,7 +47,9 @@ function wrapNetworkError(e: unknown): Error {
   }
   if (status === 403) {
     const tail = serverMsg ? ` Details: ${serverMsg}` : ''
-    return new Error(`GraphQL denied access (403).${tail} Your role may not allow this operation.`)
+    return new Error(
+      `GraphQL denied access (403).${tail} PostGraphile uses this for JWT verification failures (wrong signature), not your dashboard “owner” role. In Vercel set SUPABASE_JWT_SECRET to the exact JWT Secret from Supabase → Project Settings → API (no quotes). If tokens use ES256, ensure SUPABASE_URL matches this project so JWKS can load.`,
+    )
   }
   if (status === 503) {
     const tail = serverMsg ? ` Details: ${serverMsg}` : ''
