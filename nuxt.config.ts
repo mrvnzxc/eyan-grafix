@@ -1,4 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from 'node:url'
+
+const postgraphileGraphiqlHtmlStub = fileURLToPath(
+  new URL('./server/shims/postgraphile-graphiql-html.js', import.meta.url),
+)
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
@@ -53,13 +59,21 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    // Keep PostGraphile external (avoid Rollup parsing build-turbo assets), but
-    // explicitly include the non-turbo build files for serverless tracing.
+    // Keep PostGraphile external for serverless tracing; stub GraphiQL HTML asset for Rollup.
     externals: {
       external: ['postgraphile', 'pg', 'jsonwebtoken'],
-      traceInclude: [
-        'node_modules/postgraphile/build/**/*',
-        'node_modules/postgraphile/build/index.js',
+    },
+    rollupConfig: {
+      plugins: [
+        {
+          name: 'stub-postgraphile-graphiql-html',
+          resolveId(id) {
+            if (id.endsWith('postgraphile/build/assets/graphiql.html.js')) {
+              return postgraphileGraphiqlHtmlStub
+            }
+            return null
+          },
+        },
       ],
     },
   },
