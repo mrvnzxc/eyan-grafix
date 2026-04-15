@@ -43,8 +43,9 @@ function loadPostgraphile(): (
   schema: string,
   options: Record<string, unknown>,
 ) => PostgraphileMiddleware {
-  // Force non-turbo entry: build-turbo assets can break Rollup parsing on Vercel.
-  const mod = require('postgraphile/build/index.js') as {
+  // Use the package entry (not a deep path) so Vercel/Nitro file tracing keeps a resolvable layout.
+  // Turbo mode is off unless GRAPHILE_TURBO=1; do not set that on Vercel.
+  const mod = require('postgraphile') as {
     default?: (...args: unknown[]) => PostgraphileMiddleware
     postgraphile?: (...args: unknown[]) => PostgraphileMiddleware
   }
