@@ -1,30 +1,74 @@
 type GqlResponse<T> = { data?: T; errors?: { message: string }[] }
 
-const GRAPHQL_TIMEOUT_MS = 30_000
+/** Serverless cold start + PostGraphile first query can exceed 30s on Vercel. */
+const GRAPHQL_TIMEOUT_MS = 90_000
 
 function graphqlErrorsMessage(errors: { message: string }[] | undefined) {
   if (!errors?.length) return 'GraphQL error'
   return errors.map((e) => e.message).join('; ')
 }
 
+function httpStatusFromError(e: unknown): number | undefined {
+  if (!e || typeof e !== 'object') return undefined
+  const sc = (e as { statusCode?: unknown }).statusCode
+  return typeof sc === 'number' && !Number.isNaN(sc) ? sc : undefined
+}
+
+function serverMessageFromError(e: unknown): string | undefined {
+  if (!e || typeof e !== 'object' || !('data' in e)) return undefined
+  const d = (e as { data?: unknown }).data
+  if (!d || typeof d !== 'object') return undefined
+  const msg = (d as { message?: unknown }).message
+  return typeof msg === 'string' && msg.trim() ? msg : undefined
+}
+
 function wrapNetworkError(e: unknown): Error {
   if (!(e instanceof Error)) return new Error(String(e))
+
+  const status = httpStatusFromError(e)
+  const serverMsg = serverMessageFromError(e)
   const m = e.message || ''
   const n = e.name
-  if (
+
+  if (status === 401) {
+    return new Error(
+      'GraphQL denied access (401). Try refreshing the page after sign-in so your session token is sent, or sign in again.',
+    )
+  }
+  if (status === 403) {
+    return new Error('GraphQL denied access (403). Your role may not allow this operation.')
+  }
+  if (status === 503) {
+    const tail = serverMsg ? ` Details: ${serverMsg}` : ''
+    return new Error(
+      `GraphQL is unavailable (503).${tail} Check Vercel function logs, DATABASE_URL (Session pooler), and SUPABASE_JWT_SECRET.`,
+    )
+  }
+  if (status === 504 || status === 502) {
+    return new Error(
+      `GraphQL did not finish in time (${status} from the edge). On Vercel this is often the serverless limit or a very slow first request. Retry once; if it persists, increase the function max duration and ensure DATABASE_URL uses the Supabase Session pooler (see README).`,
+    )
+  }
+
+  const looksLikeClientAbort =
+    n === 'AbortError' || (n === 'FetchError' && /\babort(ed)?\b/i.test(m) && /\bsignal\b/i.test(m))
+  const looksLikeClientTimeout =
     n === 'AbortError' ||
-    n === 'FetchError' ||
-    /aborted|timeout|timed out|signal/i.test(m)
-  ) {
+    (/timed out\b|request timeout|ETIMEDOUT|UND_ERR_CONNECT_TIMEOUT/i.test(m) &&
+      !/\b504\b|Gateway Timeout|Bad Gateway|\b502\b/i.test(m))
+
+  if (looksLikeClientAbort || looksLikeClientTimeout) {
     return new Error(
-      'GraphQL timed out. On Windows or IPv4-only networks, set DATABASE_URL to the Supabase Session pooler URI (Dashboard → Connect → Session pooler), not db.*.supabase.co. See README.',
+      'GraphQL request timed out before the server answered. On slow networks or cold starts, try again. On Windows / IPv4-only hosts, use the Supabase Session pooler URI for DATABASE_URL (Dashboard → Connect → Session pooler), not db.*.supabase.co. See README.',
     )
   }
-  if (/fetch failed|ECONNREFUSED|ENOTFOUND|502|503|504/i.test(m)) {
+
+  if (/fetch failed|ECONNREFUSED|ENOTFOUND|ECONNRESET/i.test(m)) {
     return new Error(
-      'Cannot reach the database / GraphQL. Use Connect → Session pooler in Supabase and paste that URI as DATABASE_URL. See README.',
+      'Cannot reach GraphQL. Check your connection, site URL, and that DATABASE_URL uses the Supabase Session pooler on Vercel. See README.',
     )
   }
+
   return e
 }
 

@@ -107,6 +107,12 @@ export default defineNuxtConfig({
         },
       ],
     },
+    // PostGraphile first hit can exceed Vercel’s default ~10s limit; raise for the Nitro bundle.
+    vercel: {
+      functions: {
+        maxDuration: 60,
+      },
+    },
   },
 
   css: ['~/assets/css/main.css'],
