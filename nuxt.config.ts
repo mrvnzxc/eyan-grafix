@@ -16,6 +16,10 @@ const postgraphileGraphiqlHtmlStub = fileURLToPath(
 
 const debugDefaultShim = fileURLToPath(new URL('./server/shims/debug-default.mjs', import.meta.url))
 
+const graphileLruNamespaceShim = fileURLToPath(
+  new URL('./server/shims/graphile-lru-namespace.mjs', import.meta.url),
+)
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
@@ -74,12 +78,14 @@ export default defineNuxtConfig({
     alias: {
       // See server/shims/debug-default.mjs — fixes Rollup + PostGraphile + `debug` interop.
       debug: debugDefaultShim,
+      // See server/shims/graphile-lru-namespace.mjs — PostGraphile uses `new lru_1.default(...)`.
+      '@graphile/lru': graphileLruNamespaceShim,
     },
     // Bundle PostGraphile into the serverless function — Vercel may not ship externalized
     // node_modules for deep CJS requires. Keep native-ish drivers external.
     externals: {
       // Real `debug` loads at runtime via createRequire inside the shim (stays external).
-      external: ['pg', 'jsonwebtoken', 'debug'],
+      external: ['pg', 'jsonwebtoken', 'debug', '@graphile/lru'],
       // tslib must be inlined: Vercel's traced node_modules can omit `tslib/modules/index.js`
       // while bundled ESM chunks still resolve it (PostGraphile → tslib).
       inline: ['postgraphile', 'tslib'],
