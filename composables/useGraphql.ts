@@ -44,6 +44,12 @@ function wrapNetworkError(e: unknown): Error {
       `GraphQL is unavailable (503).${tail} Check Vercel function logs, DATABASE_URL (Session pooler), and SUPABASE_JWT_SECRET.`,
     )
   }
+  if (status === 500) {
+    const tail = serverMsg ? ` Details: ${serverMsg}` : ''
+    return new Error(
+      `GraphQL failed on the server (500).${tail} Check Vercel function logs for /api/graphql to see the root error.`,
+    )
+  }
   if (status === 504 || status === 502) {
     return new Error(
       `GraphQL did not finish in time (${status} from the edge). On Vercel this is often the serverless limit or a very slow first request. Retry once; if it persists, increase the function max duration and ensure DATABASE_URL uses the Supabase Session pooler (see README).`,

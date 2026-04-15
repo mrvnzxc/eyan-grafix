@@ -30,6 +30,19 @@ export default defineLazyEventHandler(() => {
       })
     }
 
-    await callNodeListener(pg, event.node.req, event.node.res)
+    try {
+      await callNodeListener(pg, event.node.req, event.node.res)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error('PostGraphile request error:', msg)
+      if (event.node.res.headersSent) {
+        return
+      }
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'GraphQL request failed',
+        message: msg,
+      })
+    }
   })
 })
