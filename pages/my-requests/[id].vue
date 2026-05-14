@@ -112,7 +112,7 @@ async function onPaymentProofChange(e: Event) {
       </p>
 
       <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800/80 dark:shadow-card-dark">
-        <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Brief</h2>
+        <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Summary</h2>
         <p class="mt-2 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-300">
           {{ row.description }}
         </p>
