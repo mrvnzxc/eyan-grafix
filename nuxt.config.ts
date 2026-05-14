@@ -29,6 +29,13 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
 
+  // Vite 7 can pre-transform `nuxt/dist/app/composables/manifest.js` and fail on `#app-manifest`
+  // before the virtual module exists (cold dev / certain module graphs). See nuxt/nuxt#33606.
+  // Remove when a Nuxt release includes the `@vite-ignore` fix for that import.
+  experimental: {
+    appManifest: false,
+  },
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxtjs/supabase',

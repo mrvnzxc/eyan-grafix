@@ -12,6 +12,7 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const api = useApiFetch()
 const paymentProof = useRequestPaymentProof()
+const notif = useNotifications()
 
 const loading = ref(true)
 const savingProof = ref(false)
@@ -73,6 +74,7 @@ async function onPaymentProofChange(e: Event) {
     const proofUrl = await uploadPaymentProofFile(row.value.id, file)
     await paymentProof.setProof(row.value.id, proofUrl)
     toast.push('Payment screenshot saved.', 'success')
+    await notif.refresh()
     await load()
   } catch (e: unknown) {
     toast.push(e instanceof Error ? e.message : 'Upload failed', 'error')

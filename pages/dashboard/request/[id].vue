@@ -12,6 +12,7 @@ const confirm = useConfirmDialog()
 const supabase = useSupabaseClient()
 const paymentProof = useRequestPaymentProof()
 const api = useApiFetch()
+const notif = useNotifications()
 
 async function notifyClientOfResponse(requestId: string) {
   try {
@@ -66,6 +67,7 @@ async function saveStatus() {
   try {
     await gql.updateStatus(row.value.id, statusLocal.value)
     toast.push('Status updated.', 'success')
+    await notif.refresh()
     await load()
   } catch (e: unknown) {
     toast.push(e instanceof Error ? e.message : 'Update failed', 'error')
@@ -86,6 +88,7 @@ async function saveMessage() {
     })
     toast.push('Message saved.', 'success')
     void notifyClientOfResponse(row.value.id)
+    await notif.refresh()
     await load()
   } catch (e: unknown) {
     toast.push(e instanceof Error ? e.message : 'Save failed', 'error')
@@ -125,6 +128,7 @@ async function onLayoutFile(e: Event) {
     })
     toast.push('Layout file uploaded.', 'success')
     void notifyClientOfResponse(row.value.id)
+    await notif.refresh()
     await load()
   } catch (e: unknown) {
     toast.push(e instanceof Error ? e.message : 'Upload failed', 'error')

@@ -5,8 +5,9 @@ const colorMode = useColorMode()
 const user = useSupabaseUser()
 const session = useSupabaseSession()
 const api = useApiFetch()
-const profile = ref<{ role: string } | null>(null)
+const profile = ref<{ role: string; name: string | null; email: string } | null>(null)
 const isMobileMenuOpen = ref(false)
+const route = useRoute()
 const logoSrc = computed(() =>
   colorMode.value === 'dark' ? '/whitelogo.png' : '/blacklogo.png'
 )
@@ -17,7 +18,7 @@ async function refreshProfile() {
     return
   }
   try {
-    profile.value = await api<{ role: string }>('/api/me')
+    profile.value = await api<{ role: string; name: string | null; email: string }>('/api/me')
   } catch {
     profile.value = null
   }
@@ -43,6 +44,30 @@ async function logout() {
 function toggleTheme() {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
+
+const profileDisplayName = computed(() => {
+  const p = profile.value
+  if (!p) return 'Account'
+  const n = p.name?.trim()
+  if (n) return n
+  const at = p.email?.split('@')[0]
+  if (at) return at
+  return 'Account'
+})
+
+const showNotifications = computed(() => {
+  if (!user.value || !session.value || !profile.value) return false
+  const r = profile.value.role?.toLowerCase()
+  return r === 'client' || r === 'owner'
+})
+
+/** Owner dashboard shows alerts in the sidebar; skip duplicate header control */
+const showHeaderNotifications = computed(() => {
+  if (!showNotifications.value || !profile.value) return false
+  const r = profile.value.role?.toLowerCase()
+  if (r === 'owner' && route.path.startsWith('/dashboard')) return false
+  return true
+})
 </script>
 
 <template>
@@ -58,6 +83,11 @@ function toggleTheme() {
         </NuxtLink>
 
         <div class="flex items-center gap-2 md:hidden">
+          <HeaderUserNotifications
+            v-if="showHeaderNotifications && profile"
+            :display-name="profileDisplayName"
+            :role="profile.role"
+          />
           <button
             type="button"
             class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -151,6 +181,11 @@ function toggleTheme() {
             >
               Dashboard
             </NuxtLink>
+            <HeaderUserNotifications
+              v-if="showHeaderNotifications && profile"
+              :display-name="profileDisplayName"
+              :role="profile.role"
+            />
             <button
               type="button"
               class="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
