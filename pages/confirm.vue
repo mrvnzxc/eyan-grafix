@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Session } from '@supabase/supabase-js'
+import { useApiFetch } from '~/composables/useApiFetch'
 
-definePageMeta({ layout: 'default' })
+definePageMeta({ layout: 'default', ssr: false })
 
 const route = useRoute()
 const router = useRouter()

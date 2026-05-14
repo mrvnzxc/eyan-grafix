@@ -29,3 +29,16 @@ export function validateLayoutFile(file: File): string | null {
   }
   return null
 }
+
+const MAX_PAYMENT_PROOF_BYTES = 10 * 1024 * 1024
+
+/** Payment / GCash receipt screenshots (images only). */
+export function validatePaymentProofFile(file: File): string | null {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+    return 'Payment screenshots must be JPEG, PNG, WebP, or GIF.'
+  }
+  if (file.size > MAX_PAYMENT_PROOF_BYTES) {
+    return 'Payment screenshot must be 10MB or smaller.'
+  }
+  return null
+}

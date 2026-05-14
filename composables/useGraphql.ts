@@ -1,3 +1,5 @@
+import { useApiFetch } from './useApiFetch'
+
 type GqlResponse<T> = { data?: T; errors?: { message: string }[] }
 
 /** Serverless cold start + PostGraphile first query can exceed 30s on Vercel. */
@@ -10,7 +12,8 @@ function graphqlErrorsMessage(errors: { message: string }[] | undefined) {
 
 function httpStatusFromError(e: unknown): number | undefined {
   if (!e || typeof e !== 'object') return undefined
-  const sc = (e as { statusCode?: unknown }).statusCode
+  const rec = e as Record<string, unknown>
+  const sc = rec.statusCode ?? rec.status
   return typeof sc === 'number' && !Number.isNaN(sc) ? sc : undefined
 }
 
@@ -26,6 +29,19 @@ function serverMessageFromError(e: unknown): string | undefined {
     if (first && typeof first === 'object' && 'message' in first) {
       const m = (first as { message?: unknown }).message
       if (typeof m === 'string' && m.trim()) return m
+    }
+  }
+  return undefined
+}
+
+function graphqlMessageFromFetchError(e: unknown): string | undefined {
+  if (!e || typeof e !== 'object') return undefined
+  const rec = e as Record<string, unknown>
+  const candidates: unknown[] = [rec.data, (rec as { response?: { _data?: unknown } }).response?._data]
+  for (const data of candidates) {
+    if (data && typeof data === 'object' && 'errors' in data) {
+      const errs = (data as { errors?: { message: string }[] }).errors
+      if (errs?.length) return errs.map((x) => x.message).join('; ')
     }
   }
   return undefined
@@ -61,6 +77,12 @@ function wrapNetworkError(e: unknown): Error {
     const tail = serverMsg ? ` Details: ${serverMsg}` : ''
     return new Error(
       `GraphQL failed on the server (500).${tail} Check Vercel function logs for /api/graphql to see the root error.`,
+    )
+  }
+  if (status === 400) {
+    const tail = serverMsg ? ` Details: ${serverMsg}` : ''
+    return new Error(
+      `GraphQL rejected the request (400).${tail} Often this means the database schema is behind the app (for example run supabase/migrations/20260214120000_payment_proof_gcash.sql in the Supabase SQL editor), or a query uses a field that PostGraphile does not expose.`,
     )
   }
   if (status === 504 || status === 502) {
@@ -102,6 +124,10 @@ export function useGraphql() {
         timeout: GRAPHQL_TIMEOUT_MS,
       })
     } catch (e) {
+      const gqlMsg = graphqlMessageFromFetchError(e)
+      if (gqlMsg) {
+        throw new Error(gqlMsg)
+      }
       throw wrapNetworkError(e)
     }
     if (res.errors?.length) {
@@ -154,28 +180,7 @@ export function useRequestGraphql() {
   }
 
   async function getRequests(filter?: { status?: string | null }) {
-    const hasStatus = filter?.status != null && filter.status !== ''
-    const gql = hasStatus
-      ? `
-      query GetRequests($status: String!) {
-        allRequests(
-          orderBy: CREATED_AT_DESC
-          condition: { status: $status }
-        ) {
-          nodes {
-            id
-            title
-            description
-            notes
-            status
-            createdAt
-            updatedAt
-            userId
-            userByUserId { id email name role }
-          }
-        }
-      }`
-      : `
+    const gql = `
       query GetRequestsAll {
         allRequests(orderBy: CREATED_AT_DESC) {
           nodes {
@@ -190,7 +195,8 @@ export function useRequestGraphql() {
             userByUserId { id email name role }
           }
         }
-      }`
+      }
+    `
     type Row = {
       id: string
       title: string
@@ -202,10 +208,13 @@ export function useRequestGraphql() {
       userId: string
       userByUserId: { id: string; email: string; name: string | null; role: string } | null
     }
-    const data = hasStatus
-      ? await query<{ allRequests: { nodes: Row[] } }>(gql, { status: filter!.status })
-      : await query<{ allRequests: { nodes: Row[] } }>(gql)
-    return data.allRequests.nodes
+    const data = await query<{ allRequests: { nodes: Row[] } }>(gql)
+    let nodes = data.allRequests.nodes
+    const st = filter?.status
+    if (st != null && st !== '') {
+      nodes = nodes.filter((r) => r.status === st)
+    }
+    return nodes
   }
 
   async function getRequestById(id: string) {
@@ -307,13 +316,13 @@ export function useRequestGraphql() {
 
   async function updateStatus(requestId: string, status: string) {
     const gql = `
-      mutation UpdateStatus($id: UUID!, $patch: RequestPatch!) {
-        updateRequestById(input: { id: $id, patch: $patch }) {
+      mutation UpdateStatus($id: UUID!, $requestPatch: RequestPatch!) {
+        updateRequestById(input: { id: $id, requestPatch: $requestPatch }) {
           request { id status }
         }
       }
     `
-    await query(gql, { id: requestId, patch: { status } })
+    await query(gql, { id: requestId, requestPatch: { status } })
   }
 
   async function sendResponse(input: {
@@ -330,8 +339,8 @@ export function useRequestGraphql() {
       }
     `
     const gqlUpdate = `
-      mutation UpdateResponse($id: UUID!, $patch: ResponsePatch!) {
-        updateResponseById(input: { id: $id, patch: $patch }) {
+      mutation UpdateResponse($id: UUID!, $responsePatch: ResponsePatch!) {
+        updateResponseById(input: { id: $id, responsePatch: $responsePatch }) {
           response { id }
         }
       }
@@ -339,7 +348,7 @@ export function useRequestGraphql() {
     if (existing?.responseByRequestId?.id) {
       await query(gqlUpdate, {
         id: existing.responseByRequestId.id,
-        patch: {
+        responsePatch: {
           ownerMessage: input.ownerMessage ?? existing.responseByRequestId.ownerMessage,
           layoutFileUrl:
             input.layoutFileUrl ?? existing.responseByRequestId.layoutFileUrl,

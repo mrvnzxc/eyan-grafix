@@ -14,8 +14,8 @@ const id = computed(() => route.query.id as string | undefined)
       Request received
     </h1>
     <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
-      Thanks — your references and brief are saved. You can track status and download finished work from
-      your requests list.
+      Thanks — your references and brief are saved. When the studio replies with the total and next steps, open your
+      request below. Payment (GCash) appears there only after their message.
     </p>
     <p v-if="id" class="mt-4 font-mono text-xs text-slate-400 dark:text-slate-500">ID: {{ id }}</p>
     <div class="mt-8 flex flex-wrap justify-center gap-3">

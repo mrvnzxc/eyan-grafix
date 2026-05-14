@@ -1,3 +1,5 @@
+import { useApiFetch } from '~/composables/useApiFetch'
+
 export default defineNuxtPlugin(() => {
   const user = useSupabaseUser()
   const api = useApiFetch()

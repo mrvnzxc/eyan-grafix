@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useApiFetch } from '~/composables/useApiFetch'
+
 definePageMeta({ layout: 'default', middleware: ['client-only'] })
 
 const toast = useToast()
@@ -89,7 +91,8 @@ async function onSubmit() {
       New layout request
     </h1>
     <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-      Share your brief and reference images. We will follow up through your request thread.
+      Share your brief and reference images first. After the studio replies on your request page with the total and
+      instructions, you can pay and upload a GCash screenshot there.
     </p>
 
     <form class="mt-8 space-y-6" @submit.prevent="onSubmit">

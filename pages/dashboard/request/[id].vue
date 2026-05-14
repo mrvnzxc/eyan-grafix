@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useApiFetch } from '~/composables/useApiFetch'
 import { validateLayoutFile } from '~/utils/files'
 
 definePageMeta({ layout: 'dashboard', middleware: ['owner'] })
@@ -9,10 +10,21 @@ const gql = useRequestGraphql()
 const toast = useToast()
 const confirm = useConfirmDialog()
 const supabase = useSupabaseClient()
+const paymentProof = useRequestPaymentProof()
+const api = useApiFetch()
+
+async function notifyClientOfResponse(requestId: string) {
+  try {
+    await api('/api/notify/request-response', { method: 'POST', body: { requestId } })
+  } catch {
+    // Email is optional (Resend key, etc.); do not block owner workflow.
+  }
+}
 
 const loading = ref(true)
 const saving = ref(false)
 const row = ref<Awaited<ReturnType<ReturnType<typeof useRequestGraphql>['getRequestById']>>>(null)
+const paymentProofUrl = ref<string | null>(null)
 
 const statusLocal = ref('')
 const messageLocal = ref('')
@@ -22,6 +34,7 @@ async function load() {
   try {
     const r = await gql.getRequestById(id.value)
     row.value = r
+    paymentProofUrl.value = r ? await paymentProof.fetchProof(r.id) : null
     if (r) {
       statusLocal.value = r.status
       messageLocal.value = r.responseByRequestId?.ownerMessage ?? ''
@@ -72,6 +85,7 @@ async function saveMessage() {
       layoutFileUrl: row.value.responseByRequestId?.layoutFileUrl ?? null,
     })
     toast.push('Message saved.', 'success')
+    void notifyClientOfResponse(row.value.id)
     await load()
   } catch (e: unknown) {
     toast.push(e instanceof Error ? e.message : 'Save failed', 'error')
@@ -110,6 +124,7 @@ async function onLayoutFile(e: Event) {
       layoutFileUrl: url,
     })
     toast.push('Layout file uploaded.', 'success')
+    void notifyClientOfResponse(row.value.id)
     await load()
   } catch (e: unknown) {
     toast.push(e instanceof Error ? e.message : 'Upload failed', 'error')
@@ -191,12 +206,40 @@ async function onLayoutFile(e: Event) {
           <section
             class="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800/80 dark:shadow-card-dark"
           >
+            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">GCash payment proof</h2>
+            <p v-if="!paymentProofUrl" class="mt-1 text-xs text-amber-700 dark:text-amber-300/90">
+              Client has not uploaded a payment screenshot yet.
+            </p>
+            <template v-else>
+              <a
+                :href="paymentProofUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-2 inline-flex text-sm font-medium text-indigo-600 dark:text-indigo-400"
+              >
+                Open full image →
+              </a>
+              <img
+                :src="paymentProofUrl"
+                alt="Client payment screenshot"
+                class="mt-3 max-h-64 rounded-lg border border-slate-200 object-contain dark:border-slate-600"
+              />
+            </template>
+          </section>
+
+          <section
+            class="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800/80 dark:shadow-card-dark"
+          >
             <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Reply to client</h2>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Include the quote or total and how you want them to pay (GCash number is on their page after you save).
+              When you save, they can see GCash on their request and may get an email if Resend is configured.
+            </p>
             <textarea
               v-model="messageLocal"
               rows="5"
               class="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white"
-              placeholder="Updates, questions, or delivery notes…"
+              placeholder="Quote / total, timeline, questions, or delivery notes…"
             />
             <button
               type="button"

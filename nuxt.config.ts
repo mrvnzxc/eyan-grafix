@@ -74,6 +74,10 @@ export default defineNuxtConfig({
     databaseUrl: process.env.NUXT_DATABASE_URL || process.env.DATABASE_URL || '',
     supabaseJwtSecret:
       process.env.NUXT_SUPABASE_JWT_SECRET || process.env.SUPABASE_JWT_SECRET || '',
+    /** Optional: Resend API key to email clients when the owner posts a reply (see server/api/notify/request-response.post.ts) */
+    resendApiKey: process.env.NUXT_RESEND_API_KEY || process.env.RESEND_API_KEY || '',
+    /** Sender for Resend (use onboarding@resend.dev until your domain is verified) */
+    emailFrom: process.env.NUXT_EMAIL_FROM || '',
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
     },

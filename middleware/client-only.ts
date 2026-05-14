@@ -1,3 +1,5 @@
+import { useApiFetch } from '~/composables/useApiFetch'
+
 export default defineNuxtRouteMiddleware(async () => {
   if (import.meta.server) return
 

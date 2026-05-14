@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useApiFetch } from '~/composables/useApiFetch'
+
 const colorMode = useColorMode()
 const user = useSupabaseUser()
 const session = useSupabaseSession()

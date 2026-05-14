@@ -4,9 +4,17 @@ definePageMeta({ layout: 'dashboard', middleware: ['owner'] })
 const gql = useRequestGraphql()
 const toast = useToast()
 
+/** '' = all, otherwise matches `requests.status` */
 const statusFilter = ref<string | ''>('')
 const loading = ref(true)
 const rows = ref<Awaited<ReturnType<ReturnType<typeof useRequestGraphql>['getRequests']>>>([])
+
+const statusTabs = [
+  { value: '' as const, label: 'All' },
+  { value: 'pending' as const, label: 'Pending' },
+  { value: 'in_progress' as const, label: 'In progress' },
+  { value: 'completed' as const, label: 'Completed' },
+] as const
 
 async function load() {
   loading.value = true
@@ -19,6 +27,10 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+function setStatusFilter(v: string) {
+  statusFilter.value = v
 }
 
 onMounted(load)
@@ -34,19 +46,25 @@ watch(statusFilter, load)
           Review client briefs, references, and delivery status.
         </p>
       </div>
-      <div class="flex items-center gap-2">
-        <label class="text-xs font-medium text-slate-500 dark:text-slate-400" for="filter">Status</label>
-        <select
-          id="filter"
-          v-model="statusFilter"
-          class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-        >
-          <option value="">All</option>
-          <option value="pending">Pending</option>
-          <option value="in_progress">In progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
+    </div>
+
+    <div class="mt-6 flex flex-wrap gap-2" role="tablist" aria-label="Filter by status">
+      <button
+        v-for="tab in statusTabs"
+        :key="tab.value === '' ? 'all' : tab.value"
+        type="button"
+        role="tab"
+        :aria-selected="statusFilter === tab.value"
+        class="rounded-xl px-4 py-2 text-sm font-medium transition"
+        :class="
+          statusFilter === tab.value
+            ? 'bg-indigo-600 text-white shadow-sm dark:bg-indigo-500'
+            : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700/80'
+        "
+        @click="setStatusFilter(tab.value)"
+      >
+        {{ tab.label }}
+      </button>
     </div>
 
     <div v-if="loading" class="mt-12 flex justify-center">
