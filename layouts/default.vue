@@ -35,7 +35,8 @@ watch(
 const supabase = useSupabaseClient()
 
 async function logout() {
-  await supabase.auth.signOut()
+  // `local` only ends this browser's session; default `global` would sign out every device.
+  await supabase.auth.signOut({ scope: 'local' })
   profile.value = null
   isMobileMenuOpen.value = false
   await navigateTo('/')

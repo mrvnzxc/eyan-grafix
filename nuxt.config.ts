@@ -65,6 +65,14 @@ export default defineNuxtConfig({
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
     },
+    clientOptions: {
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    },
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
