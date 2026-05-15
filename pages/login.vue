@@ -3,10 +3,10 @@ definePageMeta({ layout: 'default' })
 
 const route = useRoute()
 const router = useRouter()
-const config = useRuntimeConfig()
 const supabase = useSupabaseClient()
 const toast = useToast()
 const loading = ref(false)
+const { callbackUrl } = useOAuthCallbackUrl()
 
 const AUTH_REDIRECT_KEY = 'layoutdesk-auth-redirect'
 
@@ -26,15 +26,17 @@ onMounted(() => {
   const err = authError.value
   if (!err) return
   const raw = decodeURIComponent(err.replace(/\+/g, ' '))
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : 'this site'
   const host =
     typeof window !== 'undefined' && window.location.hostname === '127.0.0.1'
-      ? ' You are on 127.0.0.1 — use http://localhost:3000 instead.'
+      ? ' Use http://localhost:3000 instead of 127.0.0.1.'
       : ''
   const msg =
     err === 'session'
-      ? `Still no session after Google returned. Clear all site data for this host, confirm .env has SUPABASE_KEY and NUXT_PUBLIC_SITE_URL matches the address bar (e.g. http://localhost:3000), restart npm run dev, then try again.${host}`
+      ? `Still no session after Google returned. In Supabase → Authentication → URL configuration, add ${origin}/confirm to Redirect URLs. Clear site data for ${origin}, then try again.${host}`
       : raw.toLowerCase().includes('pkce') || raw.toLowerCase().includes('code verifier')
-        ? 'Sign-in cookie was lost. Use http://localhost:3000 only, clear site data for localhost, then try again. If it persists, disable browser extensions that block cookies.'
+        ? `Sign-in could not finish (PKCE). Stay on ${origin} for the whole flow — do not switch between localhost and Vercel. Clear site data for ${origin}, then sign in again from /login. In Supabase, add ${origin}/confirm under Redirect URLs.`
         : raw
   toast.push(msg, 'error')
   void router.replace({ path: '/login', query: {} })
@@ -55,7 +57,7 @@ async function signInGoogle() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${config.public.siteUrl}/confirm`,
+        redirectTo: callbackUrl(),
         skipBrowserRedirect: true,
       },
     })

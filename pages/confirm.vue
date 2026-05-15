@@ -40,10 +40,22 @@ async function finishSignIn() {
 
   const code = typeof q.code === 'string' ? q.code : ''
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (error) {
-      await router.replace('/login?error=' + encodeURIComponent(error.message))
-      return
+    // detectSessionInUrl may exchange the code on init; poll before calling exchange again.
+    let exchanged = false
+    for (let i = 0; i < 40 && !exchanged; i++) {
+      const check = await supabase.auth.getSession()
+      if (check.data.session?.user) {
+        exchanged = true
+        break
+      }
+      await new Promise((r) => setTimeout(r, 250))
+    }
+    if (!exchanged) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) {
+        await router.replace('/login?error=' + encodeURIComponent(error.message))
+        return
+      }
     }
   }
 
